@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GuardPay AI — Dark theme for AG Grid */
+.ag-theme-guardpay {
+  --ag-background-color: transparent;
+  --ag-foreground-color: #e2e8f0;
+  --ag-header-background-color: rgba(15, 23, 42, 0.8);
+  --ag-header-foreground-color: #94a3b8;
+  --ag-odd-row-background-color: rgba(15, 23, 42, 0.3);
+  --ag-row-hover-color: rgba(30, 41, 59, 0.6);
+  --ag-border-color: rgba(51, 65, 85, 0.4);
+  --ag-row-border-color: rgba(51, 65, 85, 0.3);
+  --ag-header-column-separator-color: rgba(51, 65, 85, 0.4);
+  --ag-font-size: 13px;
+  --ag-font-family: inherit;
+  --ag-grid-size: 8px;
+  --ag-list-item-height: 32px;
+  --ag-cell-horizontal-padding: 12px;
+  --ag-borders: solid 1px;
+  --ag-header-height: 44px;
+  --ag-row-height: 48px;
+}
+
+.ag-theme-guardpay .ag-header {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.ag-theme-guardpay .ag-header-cell-label {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ag-theme-guardpay .ag-row {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.25);
+}
+
+.ag-theme-guardpay .ag-root-wrapper {
+  border: none;
+}
+
+.ag-theme-guardpay .ag-paging-panel {
+  border-top: 1px solid rgba(51, 65, 85, 0.4);
+  color: #94a3b8;
+}
+
+.ag-theme-guardpay .ag-paging-page-summary-panel {
+  color: #64748b;
+}
+
+.ag-theme-guardpay .ag-checkbox-input-wrapper.ag-checked::after {
+  color: #10b981;
+}
+
+.ag-theme-guardpay .ag-filter-toolpanel-header {
+  color: #94a3b8;
+}
+
+.ag-theme-guardpay .ag-menu {
+  background: #1e293b;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  border-radius: 8px;
+}
+
+.ag-theme-guardpay .ag-picker-field-wrapper {
+  background: #1e293b;
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #e2e8f0;
+}
