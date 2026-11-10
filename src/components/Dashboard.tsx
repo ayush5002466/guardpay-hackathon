@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { ShieldCheck, TrendingUp, TrendingDown, Clock, Bot } from "lucide-react";
-import { supabase, type Settings, type AllowedMerchant, type PurchaseProposal } from "@/lib/supabase";
+import { supabase, type Settings, type AllowedMerchant, type PurchaseProposal, type ProposalStatus } from "@/lib/supabase";
 import SettingsPanel from "./SettingsPanel";
 import ProposalsGrid from "./ProposalsGrid";
 
@@ -33,6 +33,26 @@ export default function Dashboard() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  const handleBudgetSaved = async (newBudget: number) => {
+    const updated: PurchaseProposal[] = proposals.map((p) => {
+      const isApproved = Number(p.price) <= newBudget;
+      return {
+        ...p,
+        status: (isApproved ? "Approved" : "Blocked") as ProposalStatus,
+        reason: isApproved ? "Within budget" : "Exceeds max budget",
+      };
+    });
+    setProposals(updated);
+    await Promise.all(
+      updated.map((p) =>
+        supabase
+          .from("purchase_proposals")
+          .update({ status: p.status, reason: p.reason })
+          .eq("id", p.id)
+      )
+    );
+  };
 
   const stats = {
     approved: proposals.filter((p) => p.status === "Approved").length,
@@ -121,6 +141,7 @@ export default function Dashboard() {
               merchants={merchants}
               onSettingsUpdated={setSettings}
               onMerchantsUpdated={setMerchants}
+              onBudgetSaved={handleBudgetSaved}
             />
           </div>
           <div className="lg:col-span-2">

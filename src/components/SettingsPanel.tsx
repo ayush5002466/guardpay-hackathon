@@ -7,9 +7,10 @@ type Props = {
   merchants: AllowedMerchant[];
   onSettingsUpdated: (s: Settings) => void;
   onMerchantsUpdated: (m: AllowedMerchant[]) => void;
+  onBudgetSaved: (newBudget: number) => void;
 };
 
-export default function SettingsPanel({ settings, merchants, onSettingsUpdated, onMerchantsUpdated }: Props) {
+export default function SettingsPanel({ settings, merchants, onSettingsUpdated, onMerchantsUpdated, onBudgetSaved }: Props) {
   const [budgetInput, setBudgetInput] = useState("");
   const [newMerchant, setNewMerchant] = useState("");
   const [newCategory, setNewCategory] = useState("General");
@@ -42,6 +43,7 @@ export default function SettingsPanel({ settings, merchants, onSettingsUpdated, 
         return;
       }
       onSettingsUpdated(data as Settings);
+      onBudgetSaved(value);
     } else {
       const { data, error: updateError } = await supabase
         .from("guardpay_settings")
@@ -55,6 +57,7 @@ export default function SettingsPanel({ settings, merchants, onSettingsUpdated, 
         return;
       }
       onSettingsUpdated(data as Settings);
+      onBudgetSaved(value);
     }
     setSavingBudget(false);
     setSavedFlash(true);
