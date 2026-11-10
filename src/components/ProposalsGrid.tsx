@@ -12,7 +12,12 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 type Props = {
   proposals: PurchaseProposal[];
+  maxBudget: number;
 };
+
+export function computeStatus(price: number, maxBudget: number): ProposalStatus {
+  return Number(price) > maxBudget ? "Blocked" : "Approved";
+}
 
 const statusBadgeClass = (status: ProposalStatus): string => {
   switch (status) {
@@ -39,20 +44,22 @@ const PriceCell = (params: { value: number }) => (
   </span>
 );
 
-export default function ProposalsGrid({ proposals }: Props) {
+export default function ProposalsGrid({ proposals, maxBudget }: Props) {
   const gridRef = useRef<AgGridReact>(null);
 
   const rowData = useMemo(
     () =>
       proposals.map((p) => ({
         ...p,
+        status: computeStatus(p.price, maxBudget),
+        reason: Number(p.price) > maxBudget ? "Exceeds max budget" : "Within budget",
         created_display: new Date(p.created_at).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         }),
       })),
-    [proposals]
+    [proposals, maxBudget]
   );
 
   const colDefs: ColDef<(typeof rowData)[number]>[] = useMemo(

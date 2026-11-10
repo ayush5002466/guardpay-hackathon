@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { ShieldCheck, TrendingUp, TrendingDown, Clock, Bot } from "lucide-react";
-import { supabase, type Settings, type AllowedMerchant, type PurchaseProposal, type ProposalStatus } from "@/lib/supabase";
+import { supabase, type Settings, type AllowedMerchant, type PurchaseProposal } from "@/lib/supabase";
 import SettingsPanel from "./SettingsPanel";
-import ProposalsGrid from "./ProposalsGrid";
+import ProposalsGrid, { computeStatus } from "./ProposalsGrid";
 
 export default function Dashboard() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -34,36 +34,47 @@ export default function Dashboard() {
     fetchAll();
   }, [fetchAll]);
 
-  const handleBudgetSaved = async (newBudget: number) => {
-    const updated: PurchaseProposal[] = proposals.map((p) => {
-      const isApproved = Number(p.price) <= newBudget;
-      return {
+  const maxBudget = settings?.max_budget ?? 0;
+
+  const evaluatedProposals = useMemo(
+    () =>
+      proposals.map((p) => ({
         ...p,
-        status: (isApproved ? "Approved" : "Blocked") as ProposalStatus,
-        reason: isApproved ? "Within budget" : "Exceeds max budget",
-      };
-    });
-    setProposals(updated);
+        status: computeStatus(p.price, maxBudget),
+        reason: Number(p.price) > maxBudget ? "Exceeds max budget" : "Within budget",
+      })),
+    [proposals, maxBudget]
+  );
+
+  const stats = useMemo(
+    () => ({
+      approved: evaluatedProposals.filter((p) => p.status === "Approved").length,
+      blocked: evaluatedProposals.filter((p) => p.status === "Blocked").length,
+      total: evaluatedProposals.length,
+    }),
+    [evaluatedProposals]
+  );
+
+  const totalSpend = useMemo(
+    () =>
+      evaluatedProposals
+        .filter((p) => p.status === "Approved")
+        .reduce((sum, p) => sum + Number(p.price), 0),
+    [evaluatedProposals]
+  );
+
+  const handleBudgetSaved = async (newBudget: number) => {
     await Promise.all(
-      updated.map((p) =>
-        supabase
+      proposals.map((p) => {
+        const status = computeStatus(p.price, newBudget);
+        const reason = Number(p.price) > newBudget ? "Exceeds max budget" : "Within budget";
+        return supabase
           .from("purchase_proposals")
-          .update({ status: p.status, reason: p.reason })
-          .eq("id", p.id)
-      )
+          .update({ status, reason })
+          .eq("id", p.id);
+      })
     );
   };
-
-  const stats = {
-    approved: proposals.filter((p) => p.status === "Approved").length,
-    blocked: proposals.filter((p) => p.status === "Blocked").length,
-    pending: proposals.filter((p) => p.status === "Pending").length,
-    total: proposals.length,
-  };
-
-  const totalSpend = proposals
-    .filter((p) => p.status === "Approved")
-    .reduce((sum, p) => sum + Number(p.price), 0);
 
   if (loading) {
     return (
@@ -114,22 +125,22 @@ export default function Dashboard() {
             icon={<TrendingDown className="w-5 h-5" />}
             label="Blocked"
             value={stats.blocked}
-            subValue="Policy violations"
+            subValue="Exceeds max budget"
             color="red"
           />
           <StatCard
             icon={<Clock className="w-5 h-5" />}
-            label="Pending"
-            value={stats.pending}
-            subValue="Awaiting review"
-            color="amber"
+            label="Max Budget"
+            value={`$${maxBudget.toLocaleString("en-US")}`}
+            subValue={`${merchants.length} allowed merchants`}
+            color="blue"
           />
           <StatCard
             icon={<ShieldCheck className="w-5 h-5" />}
-            label="Max Budget"
-            value={`$${(settings?.max_budget ?? 0).toLocaleString("en-US")}`}
-            subValue={`${merchants.length} allowed merchants`}
-            color="blue"
+            label="Total Proposals"
+            value={stats.total}
+            subValue="All tracked items"
+            color="amber"
           />
         </div>
 
@@ -151,7 +162,7 @@ export default function Dashboard() {
                 <span className="text-xs text-slate-500">{stats.total} proposals</span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <ProposalsGrid proposals={proposals} />
+                <ProposalsGrid proposals={proposals} maxBudget={maxBudget} />
               </div>
             </div>
           </div>
